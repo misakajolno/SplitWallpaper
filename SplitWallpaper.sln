@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D3A0B757-5081-4CA5-B87F-92620EE7334E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SplitWallpaper.App", "src\SplitWallpaper.App\SplitWallpaper.App.csproj", "{F52CF767-ADFA-4ABD-B9A3-1B0025E4F88D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{46C2A035-8580-49A2-8F97-2CF5B1FCD9F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SplitWallpaper.Tests", "tests\SplitWallpaper.Tests\SplitWallpaper.Tests.csproj", "{5293F00F-7A8F-43AD-B844-158B41BEB629}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SplitWallpaper.Core", "src\SplitWallpaper.Core\SplitWallpaper.Core.csproj", "{950BCAA7-AA44-4365-9808-957A0A7355EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SplitWallpaper.App.Tests", "tests\SplitWallpaper.App.Tests\SplitWallpaper.App.Tests.csproj", "{CFA6A934-8BB1-4331-9766-D3D50C0006CE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F52CF767-ADFA-4ABD-B9A3-1B0025E4F88D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F52CF767-ADFA-4ABD-B9A3-1B0025E4F88D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F52CF767-ADFA-4ABD-B9A3-1B0025E4F88D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F52CF767-ADFA-4ABD-B9A3-1B0025E4F88D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5293F00F-7A8F-43AD-B844-158B41BEB629}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5293F00F-7A8F-43AD-B844-158B41BEB629}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5293F00F-7A8F-43AD-B844-158B41BEB629}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5293F00F-7A8F-43AD-B844-158B41BEB629}.Release|Any CPU.Build.0 = Release|Any CPU
+		{950BCAA7-AA44-4365-9808-957A0A7355EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{950BCAA7-AA44-4365-9808-957A0A7355EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{950BCAA7-AA44-4365-9808-957A0A7355EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{950BCAA7-AA44-4365-9808-957A0A7355EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFA6A934-8BB1-4331-9766-D3D50C0006CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFA6A934-8BB1-4331-9766-D3D50C0006CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFA6A934-8BB1-4331-9766-D3D50C0006CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFA6A934-8BB1-4331-9766-D3D50C0006CE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F52CF767-ADFA-4ABD-B9A3-1B0025E4F88D} = {D3A0B757-5081-4CA5-B87F-92620EE7334E}
+		{5293F00F-7A8F-43AD-B844-158B41BEB629} = {46C2A035-8580-49A2-8F97-2CF5B1FCD9F7}
+		{950BCAA7-AA44-4365-9808-957A0A7355EC} = {D3A0B757-5081-4CA5-B87F-92620EE7334E}
+		{CFA6A934-8BB1-4331-9766-D3D50C0006CE} = {46C2A035-8580-49A2-8F97-2CF5B1FCD9F7}
+	EndGlobalSection
+EndGlobal

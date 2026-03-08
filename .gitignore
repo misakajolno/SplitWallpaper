@@ -1,0 +1,25 @@
+# Local SDKs and tools
+.dotnet/
+.tooling/
+
+# IDE and editor settings
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+**/bin/
+**/obj/
+TestResults/
+
+# Publish and generated assets
+release/
+output/
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
