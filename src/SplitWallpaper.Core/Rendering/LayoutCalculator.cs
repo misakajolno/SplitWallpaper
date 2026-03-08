@@ -22,6 +22,17 @@ public static class LayoutCalculator
         return ratio;
     }
 
+    public static int NormalizeSplitPercentage(double ratio)
+    {
+        var clampedRatio = ClampSplitRatio(ratio);
+        return (int)Math.Round(clampedRatio * 100d, MidpointRounding.AwayFromZero);
+    }
+
+    public static double NormalizeSplitRatio(double ratio)
+    {
+        return NormalizeSplitPercentage(ratio) / 100d;
+    }
+
     public static SplitRegions CalculateRegions(int totalWidth, int totalHeight, double splitRatio)
     {
         if (totalWidth <= 0)
@@ -34,19 +45,20 @@ public static class LayoutCalculator
             throw new ArgumentOutOfRangeException(nameof(totalHeight));
         }
 
-        var effectiveRatio = ClampSplitRatio(splitRatio);
+        var requestedRatio = NormalizeSplitRatio(splitRatio);
 
         if (totalWidth == 1)
         {
             return new SplitRegions(
                 new PixelRect(0, 0, 1, totalHeight),
                 new PixelRect(1, 0, 0, totalHeight),
-                effectiveRatio);
+                1d);
         }
 
-        var leftWidth = (int)Math.Round(totalWidth * effectiveRatio, MidpointRounding.AwayFromZero);
+        var leftWidth = (int)Math.Round(totalWidth * requestedRatio, MidpointRounding.AwayFromZero);
         leftWidth = Math.Clamp(leftWidth, 1, totalWidth - 1);
         var rightWidth = totalWidth - leftWidth;
+        var effectiveRatio = (double)leftWidth / totalWidth;
 
         return new SplitRegions(
             new PixelRect(0, 0, leftWidth, totalHeight),

@@ -23,7 +23,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string? _rightImagePath;
     private BgraBitmap? _leftBitmap;
     private BgraBitmap? _rightBitmap;
-    private double _splitRatio = 0.5;
+    private int _splitPercentage = 50;
     private FillModeOption _selectedFillMode = FillModeOption.Cover;
     private BitmapSource? _previewImageSource;
     private string _statusMessage = "请选择左右图片开始预览。";
@@ -82,22 +82,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         private set => SetField(ref _rightImagePath, value);
     }
 
-    public double SplitRatio
-    {
-        get => _splitRatio;
-        set
-        {
-            var clampedValue = LayoutCalculator.ClampSplitRatio(value);
+    public int SplitPercentage => _splitPercentage;
 
-            if (SetField(ref _splitRatio, clampedValue))
-            {
-                OnPropertyChanged(nameof(SplitRatioText));
-                RefreshPreviewIfReady();
-            }
-        }
+    public double SplitRatio => _splitPercentage / 100d;
+
+    public double SplitSliderValue
+    {
+        get => _splitPercentage;
+        set => SetSplitPercentage((int)Math.Round(value, MidpointRounding.AwayFromZero));
     }
 
-    public string SplitRatioText => $"{SplitRatio:P0}";
+    public string SplitRatioText => $"{_splitPercentage}%";
 
     public FillModeOption SelectedFillMode
     {
@@ -152,7 +147,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             _selectedFillMode = config.FillMode;
             OnPropertyChanged(nameof(SelectedFillMode));
 
-            _splitRatio = LayoutCalculator.ClampSplitRatio(config.SplitRatio);
+            _splitPercentage = LayoutCalculator.NormalizeSplitPercentage(config.SplitRatio);
+            OnPropertyChanged(nameof(SplitPercentage));
+            OnPropertyChanged(nameof(SplitSliderValue));
             OnPropertyChanged(nameof(SplitRatio));
             OnPropertyChanged(nameof(SplitRatioText));
 
@@ -198,7 +195,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public void SetSplitRatioFromPreview(double splitRatio)
     {
-        SplitRatio = splitRatio;
+        SetSplitPercentage(LayoutCalculator.NormalizeSplitPercentage(splitRatio));
     }
 
     public void SetLeftImagePath(string path)
@@ -316,6 +313,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             OnPropertyChanged(nameof(CanApply));
         }
+    }
+
+
+    private void SetSplitPercentage(int splitPercentage)
+    {
+        var normalizedPercentage = LayoutCalculator.NormalizeSplitPercentage(splitPercentage / 100d);
+
+        if (!SetField(ref _splitPercentage, normalizedPercentage, nameof(SplitPercentage)))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(SplitSliderValue));
+        OnPropertyChanged(nameof(SplitRatio));
+        OnPropertyChanged(nameof(SplitRatioText));
+        RefreshPreviewIfReady();
     }
 
     private static string CalculateAspectText(int width, int height)

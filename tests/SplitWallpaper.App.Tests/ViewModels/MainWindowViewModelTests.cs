@@ -58,6 +58,30 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void SetSplitRatioFromPreview_SnapsToWholePercent()
+    {
+        var viewModel = CreateViewModel(screenInfoService: new FakeScreenInfoService(new PixelSize(5120, 1440)));
+
+        viewModel.SetSplitRatioFromPreview(0.503);
+
+        Assert.Equal(0.5, viewModel.SplitRatio, 10);
+        Assert.Equal("50%", viewModel.SplitRatioText);
+    }
+
+    [Fact]
+    public void SplitSliderValue_SnapsToWholePercent()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.SplitSliderValue = 50.4;
+
+        Assert.Equal(50, viewModel.SplitPercentage);
+        Assert.Equal(50d, viewModel.SplitSliderValue, 10);
+        Assert.Equal(0.5, viewModel.SplitRatio, 10);
+        Assert.Equal("50%", viewModel.SplitRatioText);
+    }
+
+    [Fact]
     public void FillModes_ExposeChineseDisplayNames()
     {
         var viewModel = CreateViewModel();

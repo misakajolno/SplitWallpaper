@@ -16,6 +16,16 @@ public sealed class LayoutCalculatorTests
     }
 
     [Fact]
+    public void CalculateRegions_SnapsFractionalPercentBeforeCalculatingRegions()
+    {
+        var result = LayoutCalculator.CalculateRegions(5120, 1440, 0.503);
+
+        Assert.Equal(new PixelRect(0, 0, 2560, 1440), result.Left);
+        Assert.Equal(new PixelRect(2560, 0, 2560, 1440), result.Right);
+        Assert.Equal(0.5, result.EffectiveRatio, 10);
+    }
+
+    [Fact]
     public void CalculatePlacement_DifferentiatesFillModes()
     {
         var source = new PixelSize(1000, 500);
