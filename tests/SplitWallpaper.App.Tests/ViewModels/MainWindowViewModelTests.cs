@@ -92,6 +92,14 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public void AppPathsService_UsesBmpForGeneratedWallpaper()
+    {
+        var pathService = new AppPathsService();
+
+        Assert.EndsWith("generated-wallpaper.bmp", pathService.GeneratedWallpaperPath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ApplyAsync_UsesPrimaryDisplaySizeInsteadOfPreviewSize()
     {
         var configService = new FakeAppConfigService();
@@ -171,7 +179,7 @@ public sealed class MainWindowViewModelTests
 
         public string ConfigPath => "C:/fake/config.json";
 
-        public string GeneratedWallpaperPath => "C:/fake/generated.png";
+        public string GeneratedWallpaperPath => "C:/fake/generated.bmp";
     }
 
     private sealed class FakeBitmapConversionService : IBgraBitmapConversionService
@@ -188,7 +196,7 @@ public sealed class MainWindowViewModelTests
             return _registered[path];
         }
 
-        public void SaveAsPng(BgraBitmap bitmap, string path)
+        public void SaveAsBmp(BgraBitmap bitmap, string path)
         {
         }
 

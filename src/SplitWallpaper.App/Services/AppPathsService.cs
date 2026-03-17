@@ -8,7 +8,7 @@ public sealed class AppPathsService : IAppPathsService
     {
         RootDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SplitWallpaper");
         ConfigPath = Path.Combine(RootDirectory, "config.json");
-        GeneratedWallpaperPath = Path.Combine(RootDirectory, "generated-wallpaper.png");
+        GeneratedWallpaperPath = Path.Combine(RootDirectory, "generated-wallpaper.bmp");
     }
 
     public string RootDirectory { get; }

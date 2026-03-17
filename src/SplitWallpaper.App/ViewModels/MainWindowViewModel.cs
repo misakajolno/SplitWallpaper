@@ -226,7 +226,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             {
                 var currentScreenSize = _screenInfoService.GetPrimaryScreenSize();
                 var composedWallpaper = _wallpaperComposer.Compose(_leftBitmap!, _rightBitmap!, currentScreenSize, SplitRatio, SelectedFillMode);
-                _bitmapConversionService.SaveAsPng(composedWallpaper, _appPathsService.GeneratedWallpaperPath);
+                _bitmapConversionService.SaveAsBmp(composedWallpaper, _appPathsService.GeneratedWallpaperPath);
                 _wallpaperService.ApplyWallpaper(_appPathsService.GeneratedWallpaperPath);
                 return currentScreenSize;
             });

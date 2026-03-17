@@ -9,5 +9,5 @@ public interface IBgraBitmapConversionService
 
     BitmapSource ToBitmapSource(BgraBitmap bitmap);
 
-    void SaveAsPng(BgraBitmap bitmap, string path);
+    void SaveAsBmp(BgraBitmap bitmap, string path);
 }

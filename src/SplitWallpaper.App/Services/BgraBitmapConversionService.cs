@@ -48,7 +48,7 @@ public sealed class BgraBitmapConversionService : IBgraBitmapConversionService
         return source;
     }
 
-    public void SaveAsPng(BgraBitmap bitmap, string path)
+    public void SaveAsBmp(BgraBitmap bitmap, string path)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -61,7 +61,7 @@ public sealed class BgraBitmapConversionService : IBgraBitmapConversionService
             Directory.CreateDirectory(directory);
         }
 
-        var encoder = new PngBitmapEncoder();
+        var encoder = new BmpBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(ToBitmapSource(bitmap)));
 
         using var stream = File.Create(fullPath);
