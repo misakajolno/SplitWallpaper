@@ -13,9 +13,9 @@
     <Title>Split Wallpaper</Title>
     <Product>Split Wallpaper</Product>
     <Description>Split wallpaper composer for the primary Windows display.</Description>
-    <Version>1.0.1</Version>
-    <AssemblyVersion>1.0.1.0</AssemblyVersion>
-    <FileVersion>1.0.1.0</FileVersion>
+    <Version>1.0.2</Version>
+    <AssemblyVersion>1.0.2.0</AssemblyVersion>
+    <FileVersion>1.0.2.0</FileVersion>
     <InformationalVersion>1.0.1</InformationalVersion>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
