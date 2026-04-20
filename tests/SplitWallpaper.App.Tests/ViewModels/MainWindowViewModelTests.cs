@@ -125,6 +125,60 @@ public sealed class MainWindowViewModelTests
         Assert.NotNull(configService.LastSavedConfig);
     }
 
+    [Fact]
+    public async Task ApplyAsync_PersistsAndUsesSelectedImageOffsets()
+    {
+        var configService = new FakeAppConfigService();
+        var conversionService = new FakeBitmapConversionService();
+        var wallpaperComposer = new FakeWallpaperComposer();
+        var viewModel = CreateViewModel(
+            configService: configService,
+            conversionService: conversionService,
+            wallpaperComposer: wallpaperComposer,
+            screenInfoService: new FakeScreenInfoService(new PixelSize(1920, 1080)));
+
+        conversionService.Register("left", CreateBitmap(800, 200, 0, 0, 255));
+        conversionService.Register("right", CreateBitmap(200, 800, 255, 0, 0));
+
+        viewModel.SetLeftImagePath("left");
+        viewModel.SetRightImagePath("right");
+        viewModel.SelectPreviewSide(PreviewSelectionSide.Left);
+        viewModel.NudgeSelectedImage(12, 0);
+        viewModel.SelectPreviewSide(PreviewSelectionSide.Right);
+        viewModel.NudgeSelectedImage(0, -8);
+
+        await viewModel.ApplyAsync();
+
+        Assert.Equal(new ImageOffset(12, 0), wallpaperComposer.RequestedOffsets[^1].Left);
+        Assert.Equal(new ImageOffset(0, -8), wallpaperComposer.RequestedOffsets[^1].Right);
+        Assert.NotNull(configService.LastSavedConfig);
+        Assert.Equal(12, configService.LastSavedConfig!.LeftOffsetX);
+        Assert.Equal(0, configService.LastSavedConfig.LeftOffsetY);
+        Assert.Equal(0, configService.LastSavedConfig.RightOffsetX);
+        Assert.Equal(-8, configService.LastSavedConfig.RightOffsetY);
+    }
+
+    [Fact]
+    public void NudgeSelectedImage_UpdatesOffsetText()
+    {
+        var conversionService = new FakeBitmapConversionService();
+        var viewModel = CreateViewModel(
+            conversionService: conversionService,
+            screenInfoService: new FakeScreenInfoService(new PixelSize(1920, 1080)));
+
+        conversionService.Register("left", CreateBitmap(800, 200, 0, 0, 255));
+        conversionService.Register("right", CreateBitmap(200, 800, 255, 0, 0));
+
+        viewModel.SetLeftImagePath("left");
+        viewModel.SetRightImagePath("right");
+        viewModel.SelectPreviewSide(PreviewSelectionSide.Left);
+        viewModel.NudgeSelectedImage(10, 0);
+
+        Assert.Equal("X +10 px", viewModel.SelectedOffsetXText);
+        Assert.Equal("Y 0 px", viewModel.SelectedOffsetYText);
+        Assert.Contains("左图偏移已调整", viewModel.StatusMessage);
+    }
+
     private static MainWindowViewModel CreateViewModel(
         IAppConfigService? configService = null,
         IAppPathsService? pathService = null,
@@ -231,10 +285,19 @@ public sealed class MainWindowViewModelTests
     private sealed class FakeWallpaperComposer : IWallpaperComposer
     {
         public List<PixelSize> RequestedSizes { get; } = new();
+        public List<(ImageOffset Left, ImageOffset Right)> RequestedOffsets { get; } = new();
 
-        public BgraBitmap Compose(BgraBitmap left, BgraBitmap right, PixelSize targetSize, double splitRatio, FillModeOption fillMode)
+        public BgraBitmap Compose(
+            BgraBitmap left,
+            BgraBitmap right,
+            PixelSize targetSize,
+            double splitRatio,
+            FillModeOption fillMode,
+            ImageOffset leftOffset = default,
+            ImageOffset rightOffset = default)
         {
             RequestedSizes.Add(targetSize);
+            RequestedOffsets.Add((leftOffset, rightOffset));
             return CreateBitmap(targetSize.Width, targetSize.Height, 0, 0, 0);
         }
     }

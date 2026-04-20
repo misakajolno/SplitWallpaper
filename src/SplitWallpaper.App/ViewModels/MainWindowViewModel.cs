@@ -23,8 +23,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string? _rightImagePath;
     private BgraBitmap? _leftBitmap;
     private BgraBitmap? _rightBitmap;
+    private ImageOffset _leftOffset = ImageOffset.Zero;
+    private ImageOffset _rightOffset = ImageOffset.Zero;
     private int _splitPercentage = 50;
     private FillModeOption _selectedFillMode = FillModeOption.Cover;
+    private PreviewSelectionSide _selectedPreviewSide;
     private BitmapSource? _previewImageSource;
     private string _statusMessage = "请选择左右图片开始预览。";
     private bool _isBusy;
@@ -94,6 +97,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public string SplitRatioText => $"{_splitPercentage}%";
 
+    public PreviewSelectionSide SelectedPreviewSide
+    {
+        get => _selectedPreviewSide;
+        private set
+        {
+            if (SetField(ref _selectedPreviewSide, value))
+            {
+                OnPropertyChanged(nameof(HasSelectedPreview));
+                OnPropertyChanged(nameof(SelectedPreviewSummaryText));
+                OnPropertyChanged(nameof(SelectedOffsetXText));
+                OnPropertyChanged(nameof(SelectedOffsetYText));
+            }
+        }
+    }
+
+    public bool HasSelectedPreview => SelectedPreviewSide is not PreviewSelectionSide.None;
+
     public FillModeOption SelectedFillMode
     {
         get => _selectedFillMode;
@@ -101,6 +121,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             if (SetField(ref _selectedFillMode, value))
             {
+                ClampOffsetsToCurrentLayout();
                 RefreshPreviewIfReady();
             }
         }
@@ -130,6 +151,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         private set => SetField(ref _statusMessage, value);
     }
 
+    public string SelectedOffsetXText => $"X {FormatOffset(GetSelectedOffset().X)} px";
+
+    public string SelectedOffsetYText => $"Y {FormatOffset(GetSelectedOffset().Y)} px";
+
+    public string SelectedPreviewSummaryText => SelectedPreviewSide switch
+    {
+        PreviewSelectionSide.Left => "已选中：左图",
+        PreviewSelectionSide.Right => "已选中：右图",
+        _ => "已选中：未选择",
+    };
+
     public bool CanApply => !_isBusy && _leftBitmap is not null && _rightBitmap is not null;
 
     public async Task InitializeAsync()
@@ -158,6 +190,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 var leftImagePath = config.LeftImagePath;
                 _leftBitmap = _bitmapConversionService.LoadFromFile(leftImagePath);
                 LeftImagePath = leftImagePath;
+                _leftOffset = new ImageOffset(config.LeftOffsetX, config.LeftOffsetY);
             }
 
             if (!string.IsNullOrWhiteSpace(config.RightImagePath) && File.Exists(config.RightImagePath))
@@ -165,8 +198,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 var rightImagePath = config.RightImagePath;
                 _rightBitmap = _bitmapConversionService.LoadFromFile(rightImagePath);
                 RightImagePath = rightImagePath;
+                _rightOffset = new ImageOffset(config.RightOffsetX, config.RightOffsetY);
             }
 
+            ClampOffsetsToCurrentLayout();
             RefreshPreviewIfReady();
             OnPropertyChanged(nameof(CanApply));
             StatusMessage = CanApply ? "已恢复上次配置。" : "已恢复部分配置，请重新选择缺失图片。";
@@ -208,6 +243,57 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         LoadImage(path, isLeftImage: false);
     }
 
+    public void SelectPreviewSide(PreviewSelectionSide side)
+    {
+        if (!CanSelectPreviewSide(side))
+        {
+            return;
+        }
+
+        SelectedPreviewSide = side;
+        StatusMessage = side == PreviewSelectionSide.Left
+            ? "已选中左图，可用方向键微调偏移。"
+            : "已选中右图，可用方向键微调偏移。";
+    }
+
+    public void NudgeSelectedImage(int deltaX, int deltaY)
+    {
+        if (SelectedPreviewSide is PreviewSelectionSide.None)
+        {
+            return;
+        }
+
+        var currentOffset = GetSelectedOffset();
+        var requestedOffset = currentOffset.Translate(deltaX, deltaY);
+        ApplyOffsetForSide(SelectedPreviewSide, requestedOffset);
+        var latestOffset = GetSelectedOffset();
+        var selectionName = GetSelectedPreviewDisplayName(SelectedPreviewSide);
+
+        if (latestOffset == currentOffset)
+        {
+            if (requestedOffset != currentOffset)
+            {
+                StatusMessage = $"{selectionName}已到可移动边界，当前偏移：{SelectedOffsetXText}，{SelectedOffsetYText}。";
+            }
+
+            return;
+        }
+
+        StatusMessage = $"{selectionName}偏移已调整：{SelectedOffsetXText}，{SelectedOffsetYText}。";
+    }
+
+    public bool TryGetPreviewVisibleRect(PreviewSelectionSide side, out DoubleRect visibleRect)
+    {
+        visibleRect = default;
+
+        if (!TryGetPreviewPlacement(side, out _, out visibleRect))
+        {
+            return false;
+        }
+
+        return visibleRect.Width > 0 && visibleRect.Height > 0;
+    }
+
     public async Task ApplyAsync()
     {
         if (!CanApply)
@@ -225,7 +311,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             var screenSize = await Task.Run(() =>
             {
                 var currentScreenSize = _screenInfoService.GetPrimaryScreenSize();
-                var composedWallpaper = _wallpaperComposer.Compose(_leftBitmap!, _rightBitmap!, currentScreenSize, SplitRatio, SelectedFillMode);
+                var composedWallpaper = _wallpaperComposer.Compose(_leftBitmap!, _rightBitmap!, currentScreenSize, SplitRatio, SelectedFillMode, _leftOffset, _rightOffset);
                 _bitmapConversionService.SaveAsBmp(composedWallpaper, _appPathsService.GeneratedWallpaperPath);
                 _wallpaperService.ApplyWallpaper(_appPathsService.GeneratedWallpaperPath);
                 return currentScreenSize;
@@ -237,6 +323,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 RightImagePath = RightImagePath,
                 SplitRatio = SplitRatio,
                 FillMode = SelectedFillMode,
+                LeftOffsetX = _leftOffset.X,
+                LeftOffsetY = _leftOffset.Y,
+                RightOffsetX = _rightOffset.X,
+                RightOffsetY = _rightOffset.Y,
             });
 
             StatusMessage = $"已应用壁纸，输出尺寸 {screenSize.Width} × {screenSize.Height}。";
@@ -260,16 +350,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             if (isLeftImage)
             {
                 _leftBitmap = bitmap;
+                _leftOffset = ImageOffset.Zero;
                 LeftImagePath = path;
             }
             else
             {
                 _rightBitmap = bitmap;
+                _rightOffset = ImageOffset.Zero;
                 RightImagePath = path;
             }
 
+            ClampOffsetsToCurrentLayout();
             RefreshPreviewIfReady();
             OnPropertyChanged(nameof(CanApply));
+            OnPropertyChanged(nameof(SelectedOffsetXText));
+            OnPropertyChanged(nameof(SelectedOffsetYText));
 
             StatusMessage = CanApply
                 ? "图片已加载，可以拖动预览分割线或直接应用壁纸。"
@@ -303,7 +398,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         var previewWidth = Math.Max(1, (int)Math.Round(PreviewSurfaceWidth));
         var previewHeight = Math.Max(1, (int)Math.Round(PreviewSurfaceHeight));
-        var previewBitmap = _wallpaperComposer.Compose(_leftBitmap, _rightBitmap, new PixelSize(previewWidth, previewHeight), SplitRatio, SelectedFillMode);
+        var previewBitmap = _wallpaperComposer.Compose(_leftBitmap, _rightBitmap, new PixelSize(previewWidth, previewHeight), SplitRatio, SelectedFillMode, _leftOffset, _rightOffset);
         PreviewImageSource = _bitmapConversionService.ToBitmapSource(previewBitmap);
     }
 
@@ -328,7 +423,169 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(SplitSliderValue));
         OnPropertyChanged(nameof(SplitRatio));
         OnPropertyChanged(nameof(SplitRatioText));
+        ClampOffsetsToCurrentLayout();
         RefreshPreviewIfReady();
+    }
+
+    private void ApplyOffsetForSide(PreviewSelectionSide side, ImageOffset requestedOffset)
+    {
+        if (!TryClampOffset(side, requestedOffset, out var clampedOffset))
+        {
+            return;
+        }
+
+        switch (side)
+        {
+            case PreviewSelectionSide.Left:
+                if (!SetField(ref _leftOffset, clampedOffset, nameof(_leftOffset)))
+                {
+                    return;
+                }
+
+                break;
+            case PreviewSelectionSide.Right:
+                if (!SetField(ref _rightOffset, clampedOffset, nameof(_rightOffset)))
+                {
+                    return;
+                }
+
+                break;
+            default:
+                return;
+        }
+
+        OnPropertyChanged(nameof(SelectedOffsetXText));
+        OnPropertyChanged(nameof(SelectedOffsetYText));
+        RefreshPreviewIfReady();
+    }
+
+    private void ClampOffsetsToCurrentLayout()
+    {
+        ClampOffsetForSide(PreviewSelectionSide.Left);
+        ClampOffsetForSide(PreviewSelectionSide.Right);
+        OnPropertyChanged(nameof(SelectedOffsetXText));
+        OnPropertyChanged(nameof(SelectedOffsetYText));
+    }
+
+    private void ClampOffsetForSide(PreviewSelectionSide side)
+    {
+        var currentOffset = side == PreviewSelectionSide.Left ? _leftOffset : _rightOffset;
+
+        if (!TryClampOffset(side, currentOffset, out var clampedOffset))
+        {
+            return;
+        }
+
+        if (side == PreviewSelectionSide.Left)
+        {
+            _leftOffset = clampedOffset;
+        }
+        else if (side == PreviewSelectionSide.Right)
+        {
+            _rightOffset = clampedOffset;
+        }
+    }
+
+    private bool TryClampOffset(PreviewSelectionSide side, ImageOffset requestedOffset, out ImageOffset clampedOffset)
+    {
+        clampedOffset = ImageOffset.Zero;
+
+        if (!TryGetScreenLayout(side, out var bitmap, out var targetRegion))
+        {
+            return false;
+        }
+
+        clampedOffset = LayoutCalculator.ClampImageOffset(
+            new PixelSize(bitmap.Width, bitmap.Height),
+            targetRegion,
+            SelectedFillMode,
+            requestedOffset);
+
+        return true;
+    }
+
+    private bool TryGetPreviewPlacement(PreviewSelectionSide side, out DoubleRect placement, out DoubleRect visibleRect)
+    {
+        placement = default;
+        visibleRect = default;
+
+        if (PreviewSurfaceWidth <= 0 || PreviewSurfaceHeight <= 0)
+        {
+            return false;
+        }
+
+        if (!TryGetTargetRegion(
+                new PixelSize(Math.Max(1, (int)Math.Round(PreviewSurfaceWidth)), Math.Max(1, (int)Math.Round(PreviewSurfaceHeight))),
+                side,
+                out var bitmap,
+                out var targetRegion))
+        {
+            return false;
+        }
+
+        var offset = side == PreviewSelectionSide.Left ? _leftOffset : _rightOffset;
+        placement = LayoutCalculator.CalculatePlacement(new PixelSize(bitmap.Width, bitmap.Height), targetRegion, SelectedFillMode, offset);
+        visibleRect = LayoutCalculator.CalculateVisibleRect(placement, targetRegion);
+        return true;
+    }
+
+    private bool TryGetScreenLayout(PreviewSelectionSide side, out BgraBitmap bitmap, out PixelRect targetRegion)
+    {
+        return TryGetTargetRegion(_primaryDisplaySize, side, out bitmap, out targetRegion);
+    }
+
+    private bool TryGetTargetRegion(PixelSize totalSize, PreviewSelectionSide side, out BgraBitmap bitmap, out PixelRect targetRegion)
+    {
+        bitmap = null!;
+        targetRegion = default;
+
+        if (side == PreviewSelectionSide.Left && _leftBitmap is not null)
+        {
+            var regions = LayoutCalculator.CalculateRegions(totalSize.Width, totalSize.Height, SplitRatio);
+            bitmap = _leftBitmap;
+            targetRegion = regions.Left;
+            return true;
+        }
+
+        if (side == PreviewSelectionSide.Right && _rightBitmap is not null)
+        {
+            var regions = LayoutCalculator.CalculateRegions(totalSize.Width, totalSize.Height, SplitRatio);
+            bitmap = _rightBitmap;
+            targetRegion = regions.Right;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool CanSelectPreviewSide(PreviewSelectionSide side)
+    {
+        return side switch
+        {
+            PreviewSelectionSide.Left => _leftBitmap is not null,
+            PreviewSelectionSide.Right => _rightBitmap is not null,
+            _ => false,
+        };
+    }
+
+    private ImageOffset GetSelectedOffset()
+    {
+        return SelectedPreviewSide switch
+        {
+            PreviewSelectionSide.Left => _leftOffset,
+            PreviewSelectionSide.Right => _rightOffset,
+            _ => ImageOffset.Zero,
+        };
+    }
+
+    private static string FormatOffset(int value)
+    {
+        return value > 0 ? $"+{value}" : value.ToString();
+    }
+
+    private static string GetSelectedPreviewDisplayName(PreviewSelectionSide side)
+    {
+        return side == PreviewSelectionSide.Left ? "左图" : "右图";
     }
 
     private static string CalculateAspectText(int width, int height)

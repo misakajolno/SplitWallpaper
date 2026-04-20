@@ -10,6 +10,14 @@ public sealed class AppConfig
 
     public FillModeOption FillMode { get; set; } = FillModeOption.Cover;
 
+    public int LeftOffsetX { get; set; }
+
+    public int LeftOffsetY { get; set; }
+
+    public int RightOffsetX { get; set; }
+
+    public int RightOffsetY { get; set; }
+
     public double? WindowWidth { get; set; }
 
     public double? WindowHeight { get; set; }

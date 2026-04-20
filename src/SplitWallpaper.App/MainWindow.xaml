@@ -11,6 +11,8 @@
         MinWidth="1100"
         MinHeight="760"
         Loaded="Window_OnLoaded"
+        PreviewKeyDown="Window_OnPreviewKeyDown"
+        KeyDown="Window_OnKeyDown"
         Background="{StaticResource WindowBackgroundBrush}">
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -180,6 +182,10 @@
                         <TextBlock Margin="0,0,18,0"
                                    VerticalAlignment="Center"
                                    Foreground="{StaticResource MutedTextBrush}"
+                                   Text="{Binding SelectedPreviewSummaryText}" />
+                        <TextBlock Margin="0,0,18,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource MutedTextBrush}"
                                    Text="{Binding PrimaryDisplaySummaryText}" />
                         <TextBlock VerticalAlignment="Center"
                                    Foreground="{StaticResource PrimaryTextBrush}"
@@ -204,6 +210,7 @@
                         <Grid x:Name="PreviewHost"
                               Width="{Binding PreviewSurfaceWidth}"
                               Height="{Binding PreviewSurfaceHeight}"
+                              Focusable="True"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
                               SizeChanged="PreviewHost_OnSizeChanged">
@@ -214,7 +221,39 @@
                             <Image Source="{Binding PreviewImageSource}"
                                    Stretch="Fill" />
                             <Canvas x:Name="PreviewOverlay"
-                                    Background="Transparent">
+                                    Background="Transparent"
+                                    MouseLeftButtonDown="PreviewOverlay_OnMouseLeftButtonDown">
+                                <Border x:Name="SelectionFrame"
+                                        BorderBrush="#80FFFFFF"
+                                        BorderThickness="2"
+                                        Visibility="Collapsed"
+                                        IsHitTestVisible="False" />
+                                <Border x:Name="OffsetXBadge"
+                                        Padding="8,4"
+                                        Background="#80020617"
+                                        BorderBrush="#80FFFFFF"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Visibility="Collapsed"
+                                        IsHitTestVisible="False">
+                                    <TextBlock x:Name="OffsetXText"
+                                               Foreground="#F8FAFC"
+                                               FontSize="12"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                                <Border x:Name="OffsetYBadge"
+                                        Padding="8,4"
+                                        Background="#80020617"
+                                        BorderBrush="#80FFFFFF"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Visibility="Collapsed"
+                                        IsHitTestVisible="False">
+                                    <TextBlock x:Name="OffsetYText"
+                                               Foreground="#F8FAFC"
+                                               FontSize="12"
+                                               FontWeight="SemiBold" />
+                                </Border>
                                 <Border x:Name="SplitLine"
                                         Width="2"
                                         Background="#E2E8F0"

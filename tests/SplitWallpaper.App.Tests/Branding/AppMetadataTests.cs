@@ -17,9 +17,9 @@ public sealed class AppMetadataTests
         Assert.Contains("<Title>Split Wallpaper</Title>", project);
         Assert.Contains("<Product>Split Wallpaper</Product>", project);
         Assert.Contains("<Description>Split wallpaper composer for the primary Windows display.</Description>", project);
-        Assert.Contains("<Version>1.0.1</Version>", project);
-        Assert.Contains("<AssemblyVersion>1.0.1.0</AssemblyVersion>", project);
-        Assert.Contains("<FileVersion>1.0.1.0</FileVersion>", project);
-        Assert.Contains("<InformationalVersion>1.0.1</InformationalVersion>", project);
+        Assert.Contains("<Version>1.0.3</Version>", project);
+        Assert.Contains("<AssemblyVersion>1.0.3.0</AssemblyVersion>", project);
+        Assert.Contains("<FileVersion>1.0.3.0</FileVersion>", project);
+        Assert.Contains("<InformationalVersion>1.0.3</InformationalVersion>", project);
     }
 }

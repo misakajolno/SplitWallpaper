@@ -4,7 +4,14 @@ namespace SplitWallpaper.Core.Rendering;
 
 public sealed class WallpaperComposer : IWallpaperComposer
 {
-    public BgraBitmap Compose(BgraBitmap left, BgraBitmap right, PixelSize targetSize, double splitRatio, FillModeOption fillMode)
+    public BgraBitmap Compose(
+        BgraBitmap left,
+        BgraBitmap right,
+        PixelSize targetSize,
+        double splitRatio,
+        FillModeOption fillMode,
+        ImageOffset leftOffset = default,
+        ImageOffset rightOffset = default)
     {
         ArgumentNullException.ThrowIfNull(left);
         ArgumentNullException.ThrowIfNull(right);
@@ -22,15 +29,15 @@ public sealed class WallpaperComposer : IWallpaperComposer
         var output = new BgraBitmap(targetSize.Width, targetSize.Height, new byte[targetSize.Width * targetSize.Height * 4]);
         var regions = LayoutCalculator.CalculateRegions(targetSize.Width, targetSize.Height, splitRatio);
 
-        RenderInto(output, left, regions.Left, fillMode);
-        RenderInto(output, right, regions.Right, fillMode);
+        RenderInto(output, left, regions.Left, fillMode, leftOffset);
+        RenderInto(output, right, regions.Right, fillMode, rightOffset);
 
         return output;
     }
 
-    private static void RenderInto(BgraBitmap destination, BgraBitmap source, PixelRect targetRegion, FillModeOption fillMode)
+    private static void RenderInto(BgraBitmap destination, BgraBitmap source, PixelRect targetRegion, FillModeOption fillMode, ImageOffset offset)
     {
-        var placement = LayoutCalculator.CalculatePlacement(new PixelSize(source.Width, source.Height), targetRegion, fillMode);
+        var placement = LayoutCalculator.CalculatePlacement(new PixelSize(source.Width, source.Height), targetRegion, fillMode, offset);
 
         for (var y = targetRegion.Y; y < targetRegion.Y + targetRegion.Height; y++)
         {

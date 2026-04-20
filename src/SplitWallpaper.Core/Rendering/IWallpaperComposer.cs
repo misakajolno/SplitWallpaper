@@ -4,5 +4,12 @@ namespace SplitWallpaper.Core.Rendering;
 
 public interface IWallpaperComposer
 {
-    BgraBitmap Compose(BgraBitmap left, BgraBitmap right, PixelSize targetSize, double splitRatio, FillModeOption fillMode);
+    BgraBitmap Compose(
+        BgraBitmap left,
+        BgraBitmap right,
+        PixelSize targetSize,
+        double splitRatio,
+        FillModeOption fillMode,
+        ImageOffset leftOffset = default,
+        ImageOffset rightOffset = default);
 }

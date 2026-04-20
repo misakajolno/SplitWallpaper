@@ -87,6 +87,76 @@ public static class LayoutCalculator
         };
     }
 
+    public static DoubleRect CalculatePlacement(PixelSize source, PixelRect target, FillModeOption fillMode, ImageOffset offset)
+    {
+        var basePlacement = CalculatePlacement(source, target, fillMode);
+        var clampedOffset = ClampImageOffset(source, target, fillMode, offset);
+
+        var scaleX = basePlacement.Width / source.Width;
+        var scaleY = basePlacement.Height / source.Height;
+
+        return new DoubleRect(
+            basePlacement.X + (clampedOffset.X * scaleX),
+            basePlacement.Y + (clampedOffset.Y * scaleY),
+            basePlacement.Width,
+            basePlacement.Height);
+    }
+
+    public static ImageOffset ClampImageOffset(PixelSize source, PixelRect target, FillModeOption fillMode, ImageOffset requestedOffset)
+    {
+        var basePlacement = CalculatePlacement(source, target, fillMode);
+        var scaleX = basePlacement.Width / source.Width;
+        var scaleY = basePlacement.Height / source.Height;
+
+        var minOffsetX = 0;
+        var maxOffsetX = 0;
+        var minOffsetY = 0;
+        var maxOffsetY = 0;
+
+        if (basePlacement.Width > target.Width && scaleX > 0)
+        {
+            minOffsetX = (int)Math.Ceiling(((target.X + target.Width) - (basePlacement.X + basePlacement.Width)) / scaleX);
+            maxOffsetX = (int)Math.Floor((target.X - basePlacement.X) / scaleX);
+        }
+
+        if (basePlacement.Height > target.Height && scaleY > 0)
+        {
+            minOffsetY = (int)Math.Ceiling(((target.Y + target.Height) - (basePlacement.Y + basePlacement.Height)) / scaleY);
+            maxOffsetY = (int)Math.Floor((target.Y - basePlacement.Y) / scaleY);
+        }
+
+        if (minOffsetX > maxOffsetX)
+        {
+            minOffsetX = 0;
+            maxOffsetX = 0;
+        }
+
+        if (minOffsetY > maxOffsetY)
+        {
+            minOffsetY = 0;
+            maxOffsetY = 0;
+        }
+
+        return new ImageOffset(
+            Math.Clamp(requestedOffset.X, minOffsetX, maxOffsetX),
+            Math.Clamp(requestedOffset.Y, minOffsetY, maxOffsetY));
+    }
+
+    public static DoubleRect CalculateVisibleRect(DoubleRect placement, PixelRect target)
+    {
+        var left = Math.Max(placement.X, target.X);
+        var top = Math.Max(placement.Y, target.Y);
+        var right = Math.Min(placement.X + placement.Width, target.X + target.Width);
+        var bottom = Math.Min(placement.Y + placement.Height, target.Y + target.Height);
+
+        if (right <= left || bottom <= top)
+        {
+            return default;
+        }
+
+        return new DoubleRect(left, top, right - left, bottom - top);
+    }
+
     private static DoubleRect ScaleToFit(PixelSize source, PixelRect target, Func<double, double, double> scaleSelector)
     {
         var scaleX = (double)target.Width / source.Width;
